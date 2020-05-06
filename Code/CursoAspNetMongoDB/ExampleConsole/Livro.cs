@@ -12,7 +12,6 @@ namespace ExampleConsole
     {
         public Livro()
         {
-
         }
 
         public Livro(string titulo, string autor, int ano, int paginas, string[] assuntos)

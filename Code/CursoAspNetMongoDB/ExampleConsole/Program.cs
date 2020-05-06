@@ -21,7 +21,28 @@ namespace ExampleConsole
             //Task T = InsertMany();
 
             //Task T = LendoLivros();
-            Task T = BuscarLivros("Dom Casmurro 2");
+            Console.WriteLine("Iniciando o motor de busca");
+
+            bool run = true;
+            while(run == true)
+            {
+                Console.Write("Digite o termo de busca:");
+                var key = Console.ReadLine();
+
+                int initRegister = 0;
+
+                Console.Write("Digite o registro inicial:");
+                int.TryParse(Console.ReadLine(), out initRegister);
+
+                Task T = BuscarLivros(key, initRegister);
+                if(key == "exit")
+                {
+                    run = false;
+                }
+            }
+
+            Console.WriteLine("Finalizando o motor de busca");
+
 
             //MainSync(args);
 
@@ -180,7 +201,7 @@ namespace ExampleConsole
 
         }
 
-        private static async Task BuscarLivros(string palavraChave)
+        private static async Task BuscarLivros(string palavraChave, int skip)
         {
             var livroConnection = new ConexaoMongoDB<Livro>();
 
@@ -189,13 +210,14 @@ namespace ExampleConsole
                 {"Titulo", palavraChave }
             };
 
-            //var searchBuilder = new Builders<Livro>.Filter.Text()
-
-            
+            var filters = Builders<Livro>.Filter;
+            var conditions =    filters.Text(palavraChave, new TextSearchOptions { CaseSensitive = false, DiacriticSensitive = false }) &
+                                filters.Gte(x => x.Paginas, 100) &
+                                filters.AnyEq(x => x.Assunto, "Aventura");
 
             //livroConnection.Collection.Indexes.CreateOne(new CreateIndexModel<Livro>(Builders<Livro>.IndexKeys.Text("$**")));
 
-            var livros = await livroConnection.Collection.Find(Builders<Livro>.Filter.Text(palavraChave)).ToListAsync();
+            var livros = await livroConnection.Collection.Find(conditions).SortBy(x => x.Titulo).Skip(skip).Limit(5).ToListAsync();
             Console.WriteLine($"Livros encontrados: {livros.Count}");
 
             foreach (var item in livros)
